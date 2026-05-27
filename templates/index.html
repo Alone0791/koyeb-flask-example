@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Python Terminal + Code Runner</title>
+    <style>
+        body {
+            background: #0f0f0f;
+            color: #00ff99;
+            font-family: monospace;
+            padding: 20px;
+        }
+
+        textarea, input {
+            width: 100%;
+            background: #1a1a1a;
+            color: #00ff99;
+            border: 1px solid #333;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            background: #00ff99;
+            border: none;
+            cursor: pointer;
+        }
+
+        .box {
+            margin-bottom: 30px;
+        }
+
+        pre {
+            background: #111;
+            padding: 10px;
+            border: 1px solid #333;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🔥 Python Web Terminal + Code Runner</h1>
+
+<!-- TERMINAL -->
+<div class="box">
+    <h2>💻 Terminal</h2>
+    <input id="cmd" placeholder="Enter command like ls, whoami, date">
+    <button onclick="runTerminal()">Run Command</button>
+    <pre id="terminalOutput"></pre>
+</div>
+
+<!-- PYTHON RUNNER -->
+<div class="box">
+    <h2>🐍 Python Code Runner</h2>
+    <textarea id="code" rows="10" placeholder="Write Python code here..."></textarea>
+    <button onclick="runPython()">Run Code</button>
+    <pre id="pythonOutput"></pre>
+</div>
+
+<script>
+async function runTerminal() {
+    let cmd = document.getElementById("cmd").value;
+
+    let res = await fetch('/terminal', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({cmd})
+    });
+
+    let data = await res.json();
+    document.getElementById("terminalOutput").innerText = data.output;
+}
+
+async function runPython() {
+    let code = document.getElementById("code").value;
+
+    let res = await fetch('/run', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({code})
+    });
+
+    let data = await res.json();
+    document.getElementById("pythonOutput").innerText = data.output;
+}
+</script>
+
+</body>
+</html>
