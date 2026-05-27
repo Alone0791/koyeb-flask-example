@@ -1,24 +1,43 @@
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify
+import subprocess
 import sys
 import io
 import traceback
 
 app = Flask(__name__)
 
+# -------------------------
+# HOME UI
+# -------------------------
 @app.route('/')
 def home():
-    return "Python Code Runner API is running"
+    return render_template("index.html")
 
+# -------------------------
+# TERMINAL COMMAND RUNNER
+# -------------------------
+@app.route('/terminal', methods=['POST'])
+def terminal():
+    cmd = request.json.get("cmd")
+
+    try:
+        output = subprocess.check_output(
+            cmd,
+            shell=True,
+            stderr=subprocess.STDOUT,
+            text=True
+        )
+        return jsonify({"output": output})
+    except Exception as e:
+        return jsonify({"output": str(e)})
+
+# -------------------------
+# PYTHON CODE RUNNER
+# -------------------------
 @app.route('/run', methods=['POST'])
-def run_code():
-    data = request.get_json()
+def run_python():
+    code = request.json.get("code")
 
-    if not data or "code" not in data:
-        return jsonify({"error": "No code provided"}), 400
-
-    code = data["code"]
-
-    # Output capture
     old_stdout = sys.stdout
     old_stderr = sys.stderr
 
@@ -29,24 +48,20 @@ def run_code():
     sys.stderr = stderr_buffer
 
     try:
-        # ⚠️ WARNING: executes raw code
         exec(code, {})
         output = stdout_buffer.getvalue()
         error = stderr_buffer.getvalue()
 
         if error:
-            return jsonify({"status": "error", "error": error})
+            return jsonify({"output": error})
 
         if output.strip():
-            return jsonify({"status": "success", "output": output})
+            return jsonify({"output": output})
 
-        return jsonify({"status": "success", "message": "No output, executed successfully"})
+        return jsonify({"output": "Executed successfully (no output)"})
 
     except Exception:
-        return jsonify({
-            "status": "error",
-            "error": traceback.format_exc()
-        })
+        return jsonify({"output": traceback.format_exc()})
 
     finally:
         sys.stdout = old_stdout
@@ -54,4 +69,4 @@ def run_code():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host="0.0.0.0", port=8000, debug=True)
